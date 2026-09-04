@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Dev Yeasin Admin</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        body { background: #0a0a1a; color: white; font-family: Arial; padding: 20px; }
+        .card { background: #1a1a2e; padding: 20px; border-radius: 10px; margin-bottom: 15px; }
+        button { background: #7b2ffc; color: white; border: none; padding: 10px 20px; border-radius: 8px; cursor: pointer; }
+        input { padding: 10px; border-radius: 8px; border: none; width: 60%; }
+        .user { background: #0a0a1a; padding: 10px; margin: 5px 0; border-radius: 5px; display: flex; justify-content: space-between; }
+        .active { color: #00c853; }
+        .inactive { color: #ff1744; }
+    </style>
+</head>
+<body>
+
+    <h1>🚀 Dev Yeasin Admin Panel</h1>
+
+    <div class="card">
+        <h3>➕ Generate Code</h3>
+        <input type="text" id="emailInput" placeholder="Enter email">
+        <button onclick="generateCode()">Generate</button>
+        <div id="newCode" style="color: #00d4ff; margin-top: 10px;"></div>
+    </div>
+
+    <div class="card">
+        <h3>👥 Users</h3>
+        <button onclick="fetchUsers()">Refresh</button>
+        <div id="userList"></div>
+    </div>
+
+    <script>
+        // ========== REPLACE THESE ==========
+        const supabaseUrl = "https://gpnrxkfmpkwzxbpnrgvf.supabase.co";
+        const supabaseKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdwbnJ4a2ZtcGt3enhicG5yZ3ZmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODg0NDg3MTMsImV4cCI6MjEwNDAyNDcxM30.C5_IfFUDnsxfM7nu57YeFF72m99z2R9JEpDKe34SWtQ";
+        // ====================================
+
+        const supabase = supabase.createClient(supabaseUrl, supabaseKey);
+
+        async function generateCode() {
+            const email = document.getElementById('emailInput').value.trim();
+            if (!email) return alert('Enter email');
+
+            const code = 'DY-' + Math.random().toString(36).substring(2, 10).toUpperCase();
+            
+            const { error } = await supabase.from('users').insert({
+                activation_code: code,
+                email: email,
+                is_active: true
+            });
+
+            if (error) {
+                alert('Error: ' + error.message);
+                return;
+            }
+
+            document.getElementById('newCode').innerHTML = '✅ Code: <strong>' + code + '</strong> for ' + email;
+            document.getElementById('emailInput').value = '';
+            fetchUsers();
+        }
+
+        async function fetchUsers() {
+            const { data, error } = await supabase.from('users').select('*').order('id', { ascending: false });
+
+            if (error) {
+                document.getElementById('userList').innerHTML = 'Error: ' + error.message;
+                return;
+            }
+
+            let html = '';
+            data.forEach(u => {
+                html += `
+                    <div class="user">
+                        <span>${u.email} (${u.activation_code})</span>
+                        <span class="${u.is_active ? 'active' : 'inactive'}">${u.is_active ? 'ACTIVE' : 'INACTIVE'}</span>
+                        <button onclick="toggleUser(${u.id}, ${u.is_active})">Toggle</button>
+                        <button onclick="deleteUser(${u.id})">Delete</button>
+                    </div>
+                `;
+            });
+            document.getElementById('userList').innerHTML = html || 'No users found';
+        }
+
+        async function toggleUser(id, current) {
+            await supabase.from('users').update({ is_active: !current }).eq('id', id);
+            fetchUsers();
+        }
+
+        async function deleteUser(id) {
+            if (!confirm('Delete?')) return;
+            await supabase.from('users').delete().eq('id', id);
+            fetchUsers();
+        }
+
+        fetchUsers();
+    </script>
+
+</body>
+</html>
