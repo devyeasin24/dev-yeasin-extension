@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Dev Yeasin Admin - Local Test</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        body { background: #0a0a1a; color: white; font-family: Arial, sans-serif; padding: 20px; max-width: 900px; margin: auto; }
+        .card { background: #1a1a2e; padding: 20px; border-radius: 12px; margin-bottom: 15px; border: 1px solid #333; }
+        input, button { padding: 10px 15px; border-radius: 8px; border: none; font-size: 14px; }
+        input { background: #0a0a1a; color: #fff; border: 1px solid #444; width: 60%; }
+        button { background: #7b2ffc; color: white; cursor: pointer; font-weight: bold; }
+        .user-item { background: #0a0a1a; padding: 12px; margin: 8px 0; border-radius: 8px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; }
+        .badge-active { background: #00c853; color: #fff; padding: 4px 12px; border-radius: 20px; font-size: 12px; }
+        .badge-inactive { background: #d50000; color: #fff; padding: 4px 12px; border-radius: 20px; font-size: 12px; }
+        .code-box { background: #0a0a1a; padding: 15px; border-radius: 8px; color: #00d4ff; font-size: 20px; margin-top: 10px; border: 1px dashed #444; }
+        .error { color: #ff6b6b; }
+        .stats { display: flex; gap: 20px; flex-wrap: wrap; }
+        .stat-box { background: #0a0a1a; padding: 10px 25px; border-radius: 10px; text-align: center; }
+        .stat-number { font-size: 24px; font-weight: bold; color: #7b2ffc; }
+        .stat-label { font-size: 12px; color: #888; }
+    </style>
+</head>
+<body>
+
+    <h1>🚀 Dev Yeasin Admin - Local Test</h1>
+
+    <div class="stats" id="stats">
+        <div class="stat-box"><div class="stat-number" id="totalUsers">0</div><div class="stat-label">Total</div></div>
+        <div class="stat-box"><div class="stat-number" id="activeUsers">0</div><div class="stat-label">Active</div></div>
+        <div class="stat-box"><div class="stat-number" id="inactiveUsers">0</div><div class="stat-label">Inactive</div></div>
+    </div>
+
+    <div class="card">
+        <h3>➕ Generate Activation Code</h3>
+        <input type="text" id="emailInput" placeholder="Enter team email">
+        <button onclick="generateCode()">Generate</button>
+        <div id="codeDisplay" class="code-box" style="display:none;"></div>
+        <div id="errorMsg" class="error"></div>
+    </div>
+
+    <div class="card">
+        <h3>👥 Team Members</h3>
+        <button onclick="fetchUsers()" style="margin-bottom:15px;">🔄 Refresh List</button>
+        <div id="userList"></div>
+    </div>
+
+    <script>
+        // ============================================================
+        // YOUR SUPABASE DETAILS - URL is pre-filled
+        // ============================================================
+        const supabaseUrl = "https://gpnrxkfmpkwzxbpnrgvf.supabase.co";
+        const supabaseKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdwbnJ4a2ZtcGt3enhicG5yZ3ZmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODg0NDg3MTMsImV4cCI6MjEwNDAyNDcxM30.C5_IfFUDnsxfM7nu57YeFF72m99z2R9JEpDKe34SWtQ"; // <--- PASTE YOUR REAL KEY HERE
+        // ============================================================
+
+        const db = supabase.createClient(supabaseUrl, supabaseKey);
+
+        async function generateCode() {
+            const email = document.getElementById('emailInput').value.trim();
+            const errorEl = document.getElementById('errorMsg');
+            const display = document.getElementById('codeDisplay');
+            errorEl.textContent = '';
+            display.style.display = 'none';
+
+            if (!email) { errorEl.textContent = '⚠️ Please enter an email!'; return; }
+
+            const code = 'DY-' + Math.random().toString(36).substring(2, 10).toUpperCase();
+            const { error } = await db.from('users').insert({ activation_code: code, email: email, is_active: true });
+
+            if (error) { errorEl.textContent = '❌ Error: ' + error.message; return; }
+
+            display.style.display = 'block';
+            display.innerHTML = '✅ Code for <strong>' + email + '</strong>: <br><span style="font-size:28px;">' + code + '</span>';
+            document.getElementById('emailInput').value = '';
+            fetchUsers();
+        }
+
+        async function fetchUsers() {
+            const { data, error } = await db.from('users').select('*').order('id', { ascending: false });
+
+            if (error) {
+                document.getElementById('userList').innerHTML = '<span class="error">❌ Error: ' + error.message + '</span>';
+                return;
+            }
+
+            if (!data || data.length === 0) {
+                document.getElementById('userList').innerHTML = 'No users found.';
+                updateStats(0, 0, 0);
+                return;
+            }
+
+            let html = '';
+            let total = 0, active = 0, inactive = 0;
+            data.forEach(u => {
+                total++;
+                if (u.is_active) active++;
+                else inactive++;
+                html += `
+                    <div class="user-item">
+                        <div><strong>${u.email}</strong> (${u.activation_code})</div>
+                        <div>
+                            <span class="${u.is_active ? 'badge-active' : 'badge-inactive'}">${u.is_active ? 'ACTIVE' : 'INACTIVE'}</span>
+                            <button onclick="toggleUser(${u.id}, ${u.is_active})" style="padding:5px 12px;font-size:12px;">Toggle</button>
+                            <button onclick="deleteUser(${u.id})" style="padding:5px 12px;font-size:12px;background:#d50000;">Delete</button>
+                        </div>
+                    </div>
+                `;
+            });
+            document.getElementById('userList').innerHTML = html;
+            updateStats(total, active, inactive);
+        }
+
+        function updateStats(total, active, inactive) {
+            document.getElementById('totalUsers').textContent = total;
+            document.getElementById('activeUsers').textContent = active;
+            document.getElementById('inactiveUsers').textContent = inactive;
+        }
+
+        async function toggleUser(id, current) {
+            await db.from('users').update({ is_active: !current }).eq('id', id);
+            fetchUsers();
+        }
+
+        async function deleteUser(id) {
+            if (!confirm('Delete user?')) return;
+            await db.from('users').delete().eq('id', id);
+            fetchUsers();
+        }
+
+        fetchUsers();
+    </script>
+
+</body>
+</html>
