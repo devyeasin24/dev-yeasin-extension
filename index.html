@@ -8,9 +8,15 @@
         .card { background: #1a1a2e; padding: 20px; border-radius: 10px; margin-bottom: 15px; }
         button { background: #7b2ffc; color: white; border: none; padding: 10px 20px; border-radius: 8px; cursor: pointer; }
         input { padding: 10px; border-radius: 8px; border: none; width: 60%; }
-        .user { background: #0a0a1a; padding: 10px; margin: 5px 0; border-radius: 5px; display: flex; justify-content: space-between; }
+        .user { background: #0a0a1a; padding: 10px; margin: 5px 0; border-radius: 5px; display: flex; justify-content: space-between; flex-wrap: wrap; gap: 5px; }
         .active { color: #00c853; }
         .inactive { color: #ff1744; }
+        .badge { padding: 2px 10px; border-radius: 12px; font-size: 12px; }
+        .badge-active { background: #00c853; color: #fff; }
+        .badge-inactive { background: #ff1744; color: #fff; }
+        .code-display { color: #00d4ff; font-size: 20px; margin-top: 10px; }
+        .error { color: #ff6b6b; }
+        .success { color: #00c853; }
     </style>
 </head>
 <body>
@@ -18,32 +24,45 @@
     <h1>🚀 Dev Yeasin Admin Panel</h1>
 
     <div class="card">
-        <h3>➕ Generate Code</h3>
-        <input type="text" id="emailInput" placeholder="Enter email">
-        <button onclick="generateCode()">Generate</button>
-        <div id="newCode" style="color: #00d4ff; margin-top: 10px;"></div>
+        <h3>➕ Generate Activation Code</h3>
+        <input type="text" id="emailInput" placeholder="Enter team email">
+        <button onclick="generateCode()">Generate Code</button>
+        <div id="newCodeDisplay" class="code-display"></div>
+        <div id="errorMsg" class="error"></div>
     </div>
 
     <div class="card">
-        <h3>👥 Users</h3>
-        <button onclick="fetchUsers()">Refresh</button>
-        <div id="userList"></div>
+        <h3>👥 Team Members</h3>
+        <button onclick="fetchUsers()">🔄 Refresh List</button>
+        <div id="userList" style="margin-top:10px;"></div>
     </div>
 
     <script>
-        // ========== REPLACE THESE ==========
+        // ============================================================
+        // YOUR SUPABASE DETAILS (Your URL is already correct!)
+        // ============================================================
         const supabaseUrl = "https://gpnrxkfmpkwzxbpnrgvf.supabase.co";
-        const supabaseKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdwbnJ4a2ZtcGt3enhicG5yZ3ZmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODg0NDg3MTMsImV4cCI6MjEwNDAyNDcxM30.C5_IfFUDnsxfM7nu57YeFF72m99z2R9JEpDKe34SWtQ";
-        // ====================================
+        // ⚠️ IMPORTANT: Paste your ANON key between the quotes below!
+        const supabaseKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdwbnJ4a2ZtcGt3enhicG5yZ3ZmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODg0NDg3MTMsImV4cCI6MjEwNDAyNDcxM30.C5_IfFUDnsxfM7nu57YeFF72m99z2R9JEpDKe34SWtQ"; // <--- REPLACE THIS WITH YOUR ACTUAL KEY
+        // ============================================================
 
+        // Create the client
         const supabase = supabase.createClient(supabaseUrl, supabaseKey);
 
         async function generateCode() {
             const email = document.getElementById('emailInput').value.trim();
-            if (!email) return alert('Enter email');
+            const errorEl = document.getElementById('errorMsg');
+            const display = document.getElementById('newCodeDisplay');
+            errorEl.textContent = '';
+            display.innerHTML = '';
+
+            if (!email) {
+                errorEl.textContent = '⚠️ Please enter an email!';
+                return;
+            }
 
             const code = 'DY-' + Math.random().toString(36).substring(2, 10).toUpperCase();
-            
+
             const { error } = await supabase.from('users').insert({
                 activation_code: code,
                 email: email,
@@ -51,11 +70,11 @@
             });
 
             if (error) {
-                alert('Error: ' + error.message);
+                errorEl.textContent = '❌ Error: ' + error.message;
                 return;
             }
 
-            document.getElementById('newCode').innerHTML = '✅ Code: <strong>' + code + '</strong> for ' + email;
+            display.innerHTML = '✅ Code for <strong>' + email + '</strong>: <br><span style="font-size:28px;">' + code + '</span>';
             document.getElementById('emailInput').value = '';
             fetchUsers();
         }
@@ -64,35 +83,47 @@
             const { data, error } = await supabase.from('users').select('*').order('id', { ascending: false });
 
             if (error) {
-                document.getElementById('userList').innerHTML = 'Error: ' + error.message;
+                document.getElementById('userList').innerHTML = '<span class="error">❌ Error: ' + error.message + '</span>';
+                return;
+            }
+
+            if (!data || data.length === 0) {
+                document.getElementById('userList').innerHTML = 'No users found. Generate your first code!';
                 return;
             }
 
             let html = '';
             data.forEach(u => {
+                const statusClass = u.is_active ? 'badge-active' : 'badge-inactive';
+                const statusText = u.is_active ? 'ACTIVE' : 'INACTIVE';
                 html += `
                     <div class="user">
-                        <span>${u.email} (${u.activation_code})</span>
-                        <span class="${u.is_active ? 'active' : 'inactive'}">${u.is_active ? 'ACTIVE' : 'INACTIVE'}</span>
-                        <button onclick="toggleUser(${u.id}, ${u.is_active})">Toggle</button>
-                        <button onclick="deleteUser(${u.id})">Delete</button>
+                        <span><strong>${u.email}</strong> (${u.activation_code})</span>
+                        <span>
+                            <span class="badge ${statusClass}">${statusText}</span>
+                            <button onclick="toggleUser(${u.id}, ${u.is_active})" style="padding:5px 10px;font-size:12px;">Toggle</button>
+                            <button onclick="deleteUser(${u.id})" style="padding:5px 10px;font-size:12px;background:#d50000;">Delete</button>
+                        </span>
                     </div>
                 `;
             });
-            document.getElementById('userList').innerHTML = html || 'No users found';
+            document.getElementById('userList').innerHTML = html;
         }
 
         async function toggleUser(id, current) {
-            await supabase.from('users').update({ is_active: !current }).eq('id', id);
+            const { error } = await supabase.from('users').update({ is_active: !current }).eq('id', id);
+            if (error) return alert('Error: ' + error.message);
             fetchUsers();
         }
 
         async function deleteUser(id) {
-            if (!confirm('Delete?')) return;
-            await supabase.from('users').delete().eq('id', id);
+            if (!confirm('⚠️ Permanently remove this user?')) return;
+            const { error } = await supabase.from('users').delete().eq('id', id);
+            if (error) return alert('Error: ' + error.message);
             fetchUsers();
         }
 
+        // Load users immediately
         fetchUsers();
     </script>
 
