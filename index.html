@@ -1,133 +1,459 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>Dev Yeasin Admin - Local Test</title>
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dev Yeasin - Daily Command Center</title>
     <style>
-        body { background: #0a0a1a; color: white; font-family: Arial, sans-serif; padding: 20px; max-width: 900px; margin: auto; }
-        .card { background: #1a1a2e; padding: 20px; border-radius: 12px; margin-bottom: 15px; border: 1px solid #333; }
-        input, button { padding: 10px 15px; border-radius: 8px; border: none; font-size: 14px; }
-        input { background: #0a0a1a; color: #fff; border: 1px solid #444; width: 60%; }
-        button { background: #7b2ffc; color: white; cursor: pointer; font-weight: bold; }
-        .user-item { background: #0a0a1a; padding: 12px; margin: 8px 0; border-radius: 8px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; }
-        .badge-active { background: #00c853; color: #fff; padding: 4px 12px; border-radius: 20px; font-size: 12px; }
-        .badge-inactive { background: #d50000; color: #fff; padding: 4px 12px; border-radius: 20px; font-size: 12px; }
-        .code-box { background: #0a0a1a; padding: 15px; border-radius: 8px; color: #00d4ff; font-size: 20px; margin-top: 10px; border: 1px dashed #444; }
-        .error { color: #ff6b6b; }
-        .stats { display: flex; gap: 20px; flex-wrap: wrap; }
-        .stat-box { background: #0a0a1a; padding: 10px 25px; border-radius: 10px; text-align: center; }
-        .stat-number { font-size: 24px; font-weight: bold; color: #7b2ffc; }
-        .stat-label { font-size: 12px; color: #888; }
+        /* ============================================================
+           PREMIUM DARK DASHBOARD - 3D & MODERN
+           ============================================================ */
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            background: #0B0E14;
+            color: #E4E6F0;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            min-height: 100vh;
+            padding: 20px;
+        }
+        .container { max-width: 1200px; margin: 0 auto; }
+
+        /* ---- Animated 3D Header ---- */
+        .header-3d {
+            text-align: center;
+            padding: 30px 0 20px;
+            perspective: 800px;
+        }
+        .header-3d h1 {
+            font-size: 48px;
+            font-weight: 800;
+            background: linear-gradient(135deg, #6366F1, #8B5CF6, #EC4899);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            transform: rotateX(5deg) rotateY(-5deg);
+            text-shadow: 0 20px 40px rgba(99, 102, 241, 0.3);
+            animation: float 4s ease-in-out infinite;
+        }
+        @keyframes float {
+            0%, 100% { transform: rotateX(5deg) rotateY(-5deg) translateY(0); }
+            50% { transform: rotateX(5deg) rotateY(-5deg) translateY(-10px); }
+        }
+        .header-3d .subtitle {
+            color: #5A5E8A;
+            font-size: 14px;
+            letter-spacing: 4px;
+            text-transform: uppercase;
+            margin-top: 4px;
+        }
+
+        /* ---- Stats Grid ---- */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 16px;
+            margin: 24px 0;
+        }
+        .stat-card {
+            background: #141824;
+            border: 1px solid #262B3B;
+            border-radius: 16px;
+            padding: 20px;
+            text-align: center;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        .stat-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 12px 40px rgba(99, 102, 241, 0.15);
+            border-color: #6366F1;
+        }
+        .stat-card .number {
+            font-size: 32px;
+            font-weight: 700;
+            background: linear-gradient(135deg, #6366F1, #8B5CF6);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .stat-card .label { font-size: 12px; color: #5A5E8A; margin-top: 4px; }
+
+        /* ---- 3D Quote Rotator ---- */
+        .quote-box {
+            background: linear-gradient(145deg, #141824, #1A1F2E);
+            border: 1px solid #262B3B;
+            border-radius: 20px;
+            padding: 30px 40px;
+            margin: 20px 0 30px;
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+        }
+        .quote-box::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: conic-gradient(from 0deg, transparent, rgba(99, 102, 241, 0.05), transparent, rgba(139, 92, 246, 0.05), transparent);
+            animation: spin 20s linear infinite;
+        }
+        @keyframes spin { 100% { transform: rotate(360deg); } }
+        .quote-box .quote-text {
+            position: relative;
+            z-index: 1;
+            font-size: 24px;
+            font-weight: 500;
+            color: #E4E6F0;
+            line-height: 1.6;
+            text-align: center;
+            min-height: 80px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .quote-box .quote-author {
+            position: relative;
+            z-index: 1;
+            text-align: center;
+            color: #6366F1;
+            font-weight: 600;
+            margin-top: 12px;
+            font-size: 14px;
+        }
+
+        /* ---- Todo + News Grid ---- */
+        .grid-2col {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 24px;
+            margin: 20px 0;
+        }
+        @media (max-width: 768px) { .grid-2col { grid-template-columns: 1fr; } }
+
+        .panel {
+            background: #141824;
+            border: 1px solid #262B3B;
+            border-radius: 16px;
+            padding: 20px;
+        }
+        .panel h2 {
+            font-size: 16px;
+            font-weight: 600;
+            color: #E4E6F0;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .panel h2 .badge {
+            font-size: 10px;
+            background: #6366F1;
+            color: #fff;
+            padding: 2px 10px;
+            border-radius: 999px;
+        }
+
+        .todo-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 10px 12px;
+            background: #0F1219;
+            border-radius: 10px;
+            margin-bottom: 8px;
+            border-left: 3px solid #6366F1;
+            transition: background 0.3s;
+        }
+        .todo-item:hover { background: #1A1F2E; }
+        .todo-item input[type="checkbox"] {
+            width: 18px;
+            height: 18px;
+            accent-color: #6366F1;
+            cursor: pointer;
+        }
+        .todo-item .todo-text { flex: 1; font-size: 13px; }
+        .todo-item.done .todo-text { text-decoration: line-through; color: #5A5E8A; }
+        .todo-item .todo-priority {
+            font-size: 10px;
+            padding: 2px 8px;
+            border-radius: 999px;
+            background: #1A2A3A;
+            color: #60A5FA;
+        }
+        .todo-item .todo-priority.high { background: #3A1A1A; color: #F87171; }
+
+        /* ---- News Feed ---- */
+        .news-item {
+            padding: 10px 0;
+            border-bottom: 1px solid #1A1D2B;
+            font-size: 13px;
+        }
+        .news-item:last-child { border-bottom: none; }
+        .news-item .news-title { color: #E4E6F0; }
+        .news-item .news-source { color: #5A5E8A; font-size: 11px; }
+        .news-item .news-time { color: #3A3D5C; font-size: 10px; }
+
+        /* ---- Country Focus ---- */
+        .country-grid {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-top: 8px;
+        }
+        .country-chip {
+            background: #0F1219;
+            border: 1px solid #1A1D2B;
+            border-radius: 999px;
+            padding: 4px 12px;
+            font-size: 11px;
+            color: #5A5E8A;
+        }
+        .country-chip.active {
+            border-color: #4ADE80;
+            color: #4ADE80;
+            background: #1A3A2A;
+        }
+
+        /* ---- Buttons ---- */
+        .btn-primary {
+            background: linear-gradient(135deg, #6366F1, #8B5CF6);
+            border: none;
+            border-radius: 12px;
+            padding: 12px 24px;
+            color: #fff;
+            font-weight: 600;
+            font-size: 14px;
+            cursor: pointer;
+            transition: transform 0.2s;
+            width: 100%;
+        }
+        .btn-primary:hover { transform: scale(1.02); }
+
+        .footer-text {
+            text-align: center;
+            color: #3A3D5C;
+            font-size: 11px;
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 1px solid #1A1D2B;
+        }
     </style>
 </head>
 <body>
 
-    <h1>🚀 Dev Yeasin Admin - Local Test</h1>
+<div class="container">
 
-    <div class="stats" id="stats">
-        <div class="stat-box"><div class="stat-number" id="totalUsers">0</div><div class="stat-label">Total</div></div>
-        <div class="stat-box"><div class="stat-number" id="activeUsers">0</div><div class="stat-label">Active</div></div>
-        <div class="stat-box"><div class="stat-number" id="inactiveUsers">0</div><div class="stat-label">Inactive</div></div>
+    <!-- ===== 3D HEADER ===== -->
+    <div class="header-3d">
+        <h1>⚡ Dev Yeasin</h1>
+        <div class="subtitle">Daily Command Center · 2026</div>
     </div>
 
-    <div class="card">
-        <h3>➕ Generate Activation Code</h3>
-        <input type="text" id="emailInput" placeholder="Enter team email">
-        <button onclick="generateCode()">Generate</button>
-        <div id="codeDisplay" class="code-box" style="display:none;"></div>
-        <div id="errorMsg" class="error"></div>
+    <!-- ===== LIVE STATS ===== -->
+    <div class="stats-grid">
+        <div class="stat-card">
+            <div class="number" id="statLeads">0</div>
+            <div class="label">Total Leads</div>
+        </div>
+        <div class="stat-card">
+            <div class="number" id="statSent">0</div>
+            <div class="label">Emails Sent</div>
+        </div>
+        <div class="stat-card">
+            <div class="number" id="statReplies">0</div>
+            <div class="label">Replies</div>
+        </div>
+        <div class="stat-card">
+            <div class="number" id="statFollowups">0</div>
+            <div class="label">Follow-ups Pending</div>
+        </div>
+        <div class="stat-card">
+            <div class="number" id="statConversion">0%</div>
+            <div class="label">Conversion Rate</div>
+        </div>
+        <div class="stat-card" style="border-color: #FBBF24;">
+            <div class="number" style="background: linear-gradient(135deg, #FBBF24, #F59E0B); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">🔥</div>
+            <div class="label">Focus Energy</div>
+        </div>
     </div>
 
-    <div class="card">
-        <h3>👥 Team Members</h3>
-        <button onclick="fetchUsers()" style="margin-bottom:15px;">🔄 Refresh List</button>
-        <div id="userList"></div>
+    <!-- ===== 3D QUOTE ROTATOR ===== -->
+    <div class="quote-box">
+        <div class="quote-text" id="quoteText">"The only way to do great work is to love what you do."</div>
+        <div class="quote-author" id="quoteAuthor">— Steve Jobs</div>
     </div>
 
-    <script>
-        // ============================================================
-        // YOUR SUPABASE DETAILS - URL is pre-filled
-        // ============================================================
-        const supabaseUrl = "https://gpnrxkfmpkwzxbpnrgvf.supabase.co";
-        const supabaseKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdwbnJ4a2ZtcGt3enhicG5yZ3ZmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODg0NDg3MTMsImV4cCI6MjEwNDAyNDcxM30.C5_IfFUDnsxfM7nu57YeFF72m99z2R9JEpDKe34SWtQ"; // <--- PASTE YOUR REAL KEY HERE
-        // ============================================================
+    <!-- ===== GRID: TODO + NEWS ===== -->
+    <div class="grid-2col">
 
-        const db = supabase.createClient(supabaseUrl, supabaseKey);
+        <!-- === TODO LIST === -->
+        <div class="panel">
+            <h2>📋 Today's Focus <span class="badge">5 tasks</span></h2>
+            <div id="todoList">
+                <div class="todo-item">
+                    <input type="checkbox" id="todo1">
+                    <label for="todo1" class="todo-text">Scrape 50+ leads from Google Maps</label>
+                    <span class="todo-priority high">High</span>
+                </div>
+                <div class="todo-item">
+                    <input type="checkbox" id="todo2">
+                    <label for="todo2" class="todo-text">Generate & send 100 outreach emails</label>
+                    <span class="todo-priority">Medium</span>
+                </div>
+                <div class="todo-item">
+                    <input type="checkbox" id="todo3">
+                    <label for="todo3" class="todo-text">Reply to 10 client inquiries</label>
+                    <span class="todo-priority high">High</span>
+                </div>
+                <div class="todo-item">
+                    <input type="checkbox" id="todo4">
+                    <label for="todo4" class="todo-text">Audit 5 websites using the extension</label>
+                    <span class="todo-priority">Medium</span>
+                </div>
+                <div class="todo-item">
+                    <input type="checkbox" id="todo5">
+                    <label for="todo5" class="todo-text">Watch 1 marketing/AI news update</label>
+                    <span class="todo-priority">Low</span>
+                </div>
+            </div>
+            <button class="btn-primary" onclick="resetTodo()">🔄 Reset Today's Tasks</button>
+        </div>
 
-        async function generateCode() {
-            const email = document.getElementById('emailInput').value.trim();
-            const errorEl = document.getElementById('errorMsg');
-            const display = document.getElementById('codeDisplay');
-            errorEl.textContent = '';
-            display.style.display = 'none';
+        <!-- === TECH NEWS === -->
+        <div class="panel">
+            <h2>📰 AI & Marketing News <span class="badge">Live</span></h2>
+            <div id="newsFeed">
+                <div class="news-item">
+                    <div class="news-title">🔹 Gemini 3.5 Flash released — 2x faster than previous</div>
+                    <div class="news-source">Google AI · <span class="news-time">2 hours ago</span></div>
+                </div>
+                <div class="news-item">
+                    <div class="news-title">🔹 Shopify launches AI-powered product descriptions</div>
+                    <div class="news-source">Shopify · <span class="news-time">5 hours ago</span></div>
+                </div>
+                <div class="news-item">
+                    <div class="news-title">🔹 GoHighLevel adds new AI automation workflows</div>
+                    <div class="news-source">HighLevel · <span class="news-time">1 day ago</span></div>
+                </div>
+                <div class="news-item">
+                    <div class="news-title">🔹 Upwork announces new AI matching for freelancers</div>
+                    <div class="news-source">Upwork · <span class="news-time">2 days ago</span></div>
+                </div>
+            </div>
+        </div>
+    </div>
 
-            if (!email) { errorEl.textContent = '⚠️ Please enter an email!'; return; }
+    <!-- ===== COUNTRY FOCUS ===== -->
+    <div class="panel" style="margin-top: 20px;">
+        <h2>🌍 Best Time to Target Right Now</h2>
+        <div class="country-grid" id="countryGrid">
+            <span class="country-chip active">🇺🇸 New York (EST) 🟢</span>
+            <span class="country-chip">🇬🇧 London 🟢</span>
+            <span class="country-chip active">🇩🇪 Berlin 🟢</span>
+            <span class="country-chip">🇫🇷 Paris ⚪</span>
+            <span class="country-chip">🇦🇪 Dubai 🟢</span>
+            <span class="country-chip">🇧🇩 Dhaka ⚪</span>
+            <span class="country-chip">🇦🇺 Sydney ⚪</span>
+            <span class="country-chip">🇸🇬 Singapore 🟢</span>
+        </div>
+        <div style="margin-top: 12px; font-size: 12px; color: #5A5E8A;">
+            🟢 = Active Business Hours · ⚪ = Off Hours
+        </div>
+    </div>
 
-            const code = 'DY-' + Math.random().toString(36).substring(2, 10).toUpperCase();
-            const { error } = await db.from('users').insert({ activation_code: code, email: email, is_active: true });
+    <div class="footer-text">
+        ⚡ Powered by Dev Yeasin · Auto-Syncs with your Chrome Extension
+    </div>
+</div>
 
-            if (error) { errorEl.textContent = '❌ Error: ' + error.message; return; }
+<script>
+    // ============================================================
+    // 🔄 LOAD DATA FROM SUPABASE (or Local Storage)
+    // ============================================================
+    async function loadStats() {
+        try {
+            // For demo, we use localStorage.
+            // In production, fetch from Supabase or chrome.storage
+            const leads = JSON.parse(localStorage.getItem('dashboardLeads') || '[]');
+            const sent = leads.filter(l => l.sent).length;
+            const replies = leads.filter(l => l.status === 'Replied' || l.status === 'Converted').length;
+            const followups = JSON.parse(localStorage.getItem('followups') || '[]');
 
-            display.style.display = 'block';
-            display.innerHTML = '✅ Code for <strong>' + email + '</strong>: <br><span style="font-size:28px;">' + code + '</span>';
-            document.getElementById('emailInput').value = '';
-            fetchUsers();
+            document.getElementById('statLeads').textContent = leads.length || 0;
+            document.getElementById('statSent').textContent = sent || 0;
+            document.getElementById('statReplies').textContent = replies || 0;
+            document.getElementById('statFollowups').textContent = followups.length || 0;
+            const conversion = leads.length > 0 ? Math.round((replies / leads.length) * 100) : 0;
+            document.getElementById('statConversion').textContent = conversion + '%';
+        } catch (e) {
+            console.error('Stats load error:', e);
         }
+    }
 
-        async function fetchUsers() {
-            const { data, error } = await db.from('users').select('*').order('id', { ascending: false });
+    // ============================================================
+    // 💬 3D QUOTE ROTATOR
+    // ============================================================
+    const quotes = [
+        { text: "The only way to do great work is to love what you do.", author: "Steve Jobs" },
+        { text: "Success is not final, failure is not fatal: it is the courage to continue that counts.", author: "Winston Churchill" },
+        { text: "Don't be afraid to give up the good to go for the great.", author: "John D. Rockefeller" },
+        { text: "The best time to start was yesterday. The next best time is now.", author: "Unknown" },
+        { text: "Your limitation—it's only your imagination.", author: "Unknown" },
+        { text: "Push yourself, because no one else is going to do it for you.", author: "Unknown" },
+        { text: "Great things never come from comfort zones.", author: "Unknown" },
+        { text: "Dream it. Believe it. Build it.", author: "Unknown" },
+        { text: "The future belongs to those who believe in the beauty of their dreams.", author: "Eleanor Roosevelt" },
+        { text: "You don't have to be great to start, but you have to start to be great.", author: "Zig Ziglar" }
+    ];
 
-            if (error) {
-                document.getElementById('userList').innerHTML = '<span class="error">❌ Error: ' + error.message + '</span>';
-                return;
+    let quoteIndex = 0;
+    function rotateQuote() {
+        const q = quotes[quoteIndex % quotes.length];
+        document.getElementById('quoteText').textContent = `"${q.text}"`;
+        document.getElementById('quoteAuthor').textContent = `— ${q.author}`;
+        quoteIndex = (quoteIndex + 1) % quotes.length;
+    }
+
+    // ============================================================
+    // 📋 TODO LIST
+    // ============================================================
+    function resetTodo() {
+        document.querySelectorAll('#todoList input[type="checkbox"]').forEach(cb => cb.checked = false);
+        document.querySelectorAll('#todoList .todo-item').forEach(el => el.classList.remove('done'));
+        localStorage.setItem('todoState', JSON.stringify({}));
+        alert('✅ Tasks reset! Stay focused!');
+    }
+
+    // Save todo state
+    document.addEventListener('DOMContentLoaded', function() {
+        // Load saved todo state
+        const saved = JSON.parse(localStorage.getItem('todoState') || '{}');
+        document.querySelectorAll('#todoList input[type="checkbox"]').forEach(cb => {
+            if (saved[cb.id]) {
+                cb.checked = true;
+                cb.closest('.todo-item').classList.add('done');
             }
-
-            if (!data || data.length === 0) {
-                document.getElementById('userList').innerHTML = 'No users found.';
-                updateStats(0, 0, 0);
-                return;
-            }
-
-            let html = '';
-            let total = 0, active = 0, inactive = 0;
-            data.forEach(u => {
-                total++;
-                if (u.is_active) active++;
-                else inactive++;
-                html += `
-                    <div class="user-item">
-                        <div><strong>${u.email}</strong> (${u.activation_code})</div>
-                        <div>
-                            <span class="${u.is_active ? 'badge-active' : 'badge-inactive'}">${u.is_active ? 'ACTIVE' : 'INACTIVE'}</span>
-                            <button onclick="toggleUser(${u.id}, ${u.is_active})" style="padding:5px 12px;font-size:12px;">Toggle</button>
-                            <button onclick="deleteUser(${u.id})" style="padding:5px 12px;font-size:12px;background:#d50000;">Delete</button>
-                        </div>
-                    </div>
-                `;
+            cb.addEventListener('change', function() {
+                const state = JSON.parse(localStorage.getItem('todoState') || '{}');
+                state[this.id] = this.checked;
+                localStorage.setItem('todoState', JSON.stringify(state));
+                if (this.checked) {
+                    this.closest('.todo-item').classList.add('done');
+                } else {
+                    this.closest('.todo-item').classList.remove('done');
+                }
             });
-            document.getElementById('userList').innerHTML = html;
-            updateStats(total, active, inactive);
-        }
+        });
 
-        function updateStats(total, active, inactive) {
-            document.getElementById('totalUsers').textContent = total;
-            document.getElementById('activeUsers').textContent = active;
-            document.getElementById('inactiveUsers').textContent = inactive;
-        }
+        // Load stats
+        loadStats();
 
-        async function toggleUser(id, current) {
-            await db.from('users').update({ is_active: !current }).eq('id', id);
-            fetchUsers();
-        }
+        // Start quote rotation
+        rotateQuote();
+        setInterval(rotateQuote, 8000);
 
-        async function deleteUser(id) {
-            if (!confirm('Delete user?')) return;
-            await db.from('users').delete().eq('id', id);
-            fetchUsers();
-        }
-
-        fetchUsers();
-    </script>
-
+        // Sync stats every 30 seconds
+        setInterval(loadStats, 30000);
+    });
+</script>
 </body>
 </html>
