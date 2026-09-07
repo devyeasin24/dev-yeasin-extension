@@ -45,13 +45,58 @@
             text-transform: uppercase;
             margin-top: 4px;
         }
+        .header-3d .version {
+            color: #3A3D5C;
+            font-size: 12px;
+            margin-top: 4px;
+        }
+
+        /* ---- Live Status Bar ---- */
+        .live-status {
+            background: #141824;
+            border: 1px solid #262B3B;
+            border-radius: 12px;
+            padding: 10px 20px;
+            margin: 10px 0 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+        .live-status .status-dot {
+            display: inline-block;
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: #4ADE80;
+            animation: pulse 2s infinite;
+            margin-right: 8px;
+        }
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.3; }
+        }
+        .live-status .status-text { color: #5A5E8A; font-size: 13px; }
+        .live-status .sync-btn {
+            background: #6366F1;
+            border: none;
+            border-radius: 8px;
+            padding: 6px 16px;
+            color: #fff;
+            font-weight: 600;
+            font-size: 12px;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+        .live-status .sync-btn:hover { background: #4F46E5; }
 
         /* ---- Stats Grid ---- */
         .stats-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
             gap: 16px;
-            margin: 24px 0;
+            margin: 20px 0;
         }
         .stat-card {
             background: #141824;
@@ -151,6 +196,17 @@
             padding: 2px 10px;
             border-radius: 999px;
         }
+        .panel .refresh-btn {
+            margin-left: auto;
+            background: transparent;
+            border: 1px solid #262B3B;
+            border-radius: 8px;
+            padding: 2px 10px;
+            color: #5A5E8A;
+            font-size: 11px;
+            cursor: pointer;
+        }
+        .panel .refresh-btn:hover { border-color: #6366F1; color: #E4E6F0; }
 
         .todo-item {
             display: flex;
@@ -236,6 +292,39 @@
             padding-top: 20px;
             border-top: 1px solid #1A1D2B;
         }
+
+        /* ---- Loading State ---- */
+        .loading {
+            opacity: 0.5;
+            pointer-events: none;
+        }
+
+        /* ---- Last Updated ---- */
+        .last-updated {
+            text-align: right;
+            color: #3A3D5C;
+            font-size: 10px;
+            margin-top: 4px;
+        }
+
+        /* ---- Link to Extension ---- */
+        .extension-link {
+            display: inline-block;
+            margin-top: 10px;
+            color: #6366F1;
+            text-decoration: none;
+            font-size: 12px;
+        }
+        .extension-link:hover { text-decoration: underline; }
+
+        /* Responsive tweaks */
+        @media (max-width: 480px) {
+            .header-3d h1 { font-size: 32px; }
+            .quote-box .quote-text { font-size: 18px; padding: 10px; }
+            .stats-grid { grid-template-columns: repeat(2, 1fr); }
+            .stat-card .number { font-size: 24px; }
+            .live-status { flex-direction: column; text-align: center; }
+        }
     </style>
 </head>
 <body>
@@ -246,6 +335,19 @@
     <div class="header-3d">
         <h1>⚡ Dev Yeasin</h1>
         <div class="subtitle">Daily Command Center · 2026</div>
+        <div class="version">v3.0 · Live Dashboard</div>
+    </div>
+
+    <!-- ===== LIVE STATUS BAR ===== -->
+    <div class="live-status">
+        <div>
+            <span class="status-dot"></span>
+            <span class="status-text" id="liveStatus">🟢 Live · Auto-sync enabled</span>
+        </div>
+        <div>
+            <span style="color:#5A5E8A; font-size:12px; margin-right:12px;" id="lastUpdateTime">Last updated: just now</span>
+            <button class="sync-btn" id="syncNowBtn">🔄 Sync Now</button>
+        </div>
     </div>
 
     <!-- ===== LIVE STATS ===== -->
@@ -287,7 +389,11 @@
 
         <!-- === TODO LIST === -->
         <div class="panel">
-            <h2>📋 Today's Focus <span class="badge">5 tasks</span></h2>
+            <h2>
+                📋 Today's Focus
+                <span class="badge" id="todoCount">5 tasks</span>
+                <button class="refresh-btn" id="resetTodoBtn">🔄 Reset</button>
+            </h2>
             <div id="todoList">
                 <div class="todo-item">
                     <input type="checkbox" id="todo1">
@@ -315,12 +421,16 @@
                     <span class="todo-priority">Low</span>
                 </div>
             </div>
-            <button class="btn-primary" onclick="resetTodo()">🔄 Reset Today's Tasks</button>
+            <button class="btn-primary" id="resetTodoBtn2">🔄 Reset Today's Tasks</button>
         </div>
 
         <!-- === TECH NEWS === -->
         <div class="panel">
-            <h2>📰 AI & Marketing News <span class="badge">Live</span></h2>
+            <h2>
+                📰 AI & Marketing News
+                <span class="badge">Live</span>
+                <button class="refresh-btn" id="refreshNewsBtn">🔄</button>
+            </h2>
             <div id="newsFeed">
                 <div class="news-item">
                     <div class="news-title">🔹 Gemini 3.5 Flash released — 2x faster than previous</div>
@@ -338,6 +448,10 @@
                     <div class="news-title">🔹 Upwork announces new AI matching for freelancers</div>
                     <div class="news-source">Upwork · <span class="news-time">2 days ago</span></div>
                 </div>
+                <div class="news-item">
+                    <div class="news-title">🔹 ChatGPT gets new voice and vision capabilities</div>
+                    <div class="news-source">OpenAI · <span class="news-time">3 days ago</span></div>
+                </div>
             </div>
         </div>
     </div>
@@ -346,14 +460,7 @@
     <div class="panel" style="margin-top: 20px;">
         <h2>🌍 Best Time to Target Right Now</h2>
         <div class="country-grid" id="countryGrid">
-            <span class="country-chip active">🇺🇸 New York (EST) 🟢</span>
-            <span class="country-chip">🇬🇧 London 🟢</span>
-            <span class="country-chip active">🇩🇪 Berlin 🟢</span>
-            <span class="country-chip">🇫🇷 Paris ⚪</span>
-            <span class="country-chip">🇦🇪 Dubai 🟢</span>
-            <span class="country-chip">🇧🇩 Dhaka ⚪</span>
-            <span class="country-chip">🇦🇺 Sydney ⚪</span>
-            <span class="country-chip">🇸🇬 Singapore 🟢</span>
+            <!-- Populated by JavaScript -->
         </div>
         <div style="margin-top: 12px; font-size: 12px; color: #5A5E8A;">
             🟢 = Active Business Hours · ⚪ = Off Hours
@@ -362,31 +469,125 @@
 
     <div class="footer-text">
         ⚡ Powered by Dev Yeasin · Auto-Syncs with your Chrome Extension
+        <br>
+        <a href="#" class="extension-link" id="openExtensionLink">📦 Open Dev Yeasin Extension</a>
     </div>
 </div>
 
 <script>
     // ============================================================
-    // 🔄 LOAD DATA FROM SUPABASE (or Local Storage)
+    // 📊 LOAD DATA FROM CHROME EXTENSION STORAGE
     // ============================================================
-    async function loadStats() {
-        try {
-            // For demo, we use localStorage.
-            // In production, fetch from Supabase or chrome.storage
-            const leads = JSON.parse(localStorage.getItem('dashboardLeads') || '[]');
-            const sent = leads.filter(l => l.sent).length;
-            const replies = leads.filter(l => l.status === 'Replied' || l.status === 'Converted').length;
-            const followups = JSON.parse(localStorage.getItem('followups') || '[]');
+    // Note: This dashboard reads from localStorage.
+    // Your extension should sync data to localStorage when it updates.
+    // For direct chrome.storage access, use chrome.storage.local.get()
 
-            document.getElementById('statLeads').textContent = leads.length || 0;
-            document.getElementById('statSent').textContent = sent || 0;
-            document.getElementById('statReplies').textContent = replies || 0;
-            document.getElementById('statFollowups').textContent = followups.length || 0;
-            const conversion = leads.length > 0 ? Math.round((replies / leads.length) * 100) : 0;
-            document.getElementById('statConversion').textContent = conversion + '%';
+    let dashboardData = { leads: [], followups: [] };
+
+    function loadStats() {
+        try {
+            // Try to load from localStorage (synced by extension)
+            let leads = [];
+            let followups = [];
+            
+            try {
+                const storedLeads = localStorage.getItem('dashboardLeads');
+                if (storedLeads) leads = JSON.parse(storedLeads);
+            } catch (e) {}
+            
+            try {
+                const storedFollowups = localStorage.getItem('followups');
+                if (storedFollowups) followups = JSON.parse(storedFollowups);
+            } catch (e) {}
+
+            // If empty, try to read from chrome.storage (if this is an extension page)
+            if (leads.length === 0 && typeof chrome !== 'undefined' && chrome.storage) {
+                chrome.storage.local.get(['dashboardLeads', 'followups'], function(result) {
+                    if (result.dashboardLeads) {
+                        leads = result.dashboardLeads;
+                        try { localStorage.setItem('dashboardLeads', JSON.stringify(leads)); } catch(e) {}
+                    }
+                    if (result.followups) {
+                        followups = result.followups;
+                        try { localStorage.setItem('followups', JSON.stringify(followups)); } catch(e) {}
+                    }
+                    updateDisplay(leads, followups);
+                });
+                return;
+            }
+
+            updateDisplay(leads, followups);
+
         } catch (e) {
             console.error('Stats load error:', e);
+            document.getElementById('liveStatus').textContent = '⚠️ Error loading data';
         }
+    }
+
+    function updateDisplay(leads, followups) {
+        const sent = leads.filter(l => l.sent).length;
+        const replies = leads.filter(l => l.status === 'Replied' || l.status === 'Converted').length;
+        const pendingFollowups = followups ? followups.length : 0;
+
+        document.getElementById('statLeads').textContent = leads.length || 0;
+        document.getElementById('statSent').textContent = sent || 0;
+        document.getElementById('statReplies').textContent = replies || 0;
+        document.getElementById('statFollowups').textContent = pendingFollowups || 0;
+        const conversion = leads.length > 0 ? Math.round((replies / leads.length) * 100) : 0;
+        document.getElementById('statConversion').textContent = conversion + '%';
+        
+        // Update last updated time
+        document.getElementById('lastUpdateTime').textContent = `Last updated: ${new Date().toLocaleTimeString()}`;
+        document.getElementById('liveStatus').textContent = '🟢 Live · Auto-sync enabled';
+
+        // Update country time chips
+        updateCountryChips();
+        
+        // Update todo count
+        const todoCount = document.querySelectorAll('#todoList input[type="checkbox"]').length;
+        const doneCount = document.querySelectorAll('#todoList input[type="checkbox"]:checked').length;
+        document.getElementById('todoCount').textContent = `${doneCount}/${todoCount} done`;
+    }
+
+    // ============================================================
+    // 🌍 UPDATE COUNTRY TIME CHIPS
+    // ============================================================
+    function updateCountryChips() {
+        const zones = [
+            { label: '🇺🇸 New York', tz: 'America/New_York' },
+            { label: '🇬🇧 London', tz: 'Europe/London' },
+            { label: '🇩🇪 Berlin', tz: 'Europe/Berlin' },
+            { label: '🇫🇷 Paris', tz: 'Europe/Paris' },
+            { label: '🇦🇪 Dubai', tz: 'Asia/Dubai' },
+            { label: '🇧🇩 Dhaka', tz: 'Asia/Dhaka' },
+            { label: '🇦🇺 Sydney', tz: 'Australia/Sydney' },
+            { label: '🇸🇬 Singapore', tz: 'Asia/Singapore' }
+        ];
+
+        const grid = document.getElementById('countryGrid');
+        if (!grid) return;
+        
+        let html = '';
+        zones.forEach(z => {
+            try {
+                const target = new Date(new Date().toLocaleString('en-US', { timeZone: z.tz }));
+                const hours = target.getHours();
+                const isActive = (hours >= 10 && hours <= 12) || (hours >= 14 && hours <= 17);
+                const timeStr = target.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+                html += `
+                    <span class="country-chip ${isActive ? 'active' : ''}">
+                        ${z.label} ${timeStr} ${isActive ? '🟢' : '⚪'}
+                    </span>
+                `;
+            } catch (e) {
+                html += `
+                    <span class="country-chip">
+                        ${z.label} ⚪
+                    </span>
+                `;
+            }
+        });
+        grid.innerHTML = html;
     }
 
     // ============================================================
@@ -402,7 +603,9 @@
         { text: "Great things never come from comfort zones.", author: "Unknown" },
         { text: "Dream it. Believe it. Build it.", author: "Unknown" },
         { text: "The future belongs to those who believe in the beauty of their dreams.", author: "Eleanor Roosevelt" },
-        { text: "You don't have to be great to start, but you have to start to be great.", author: "Zig Ziglar" }
+        { text: "You don't have to be great to start, but you have to start to be great.", author: "Zig Ziglar" },
+        { text: "The secret of getting ahead is getting started.", author: "Mark Twain" },
+        { text: "Believe you can and you're halfway there.", author: "Theodore Roosevelt" }
     ];
 
     let quoteIndex = 0;
@@ -420,10 +623,85 @@
         document.querySelectorAll('#todoList input[type="checkbox"]').forEach(cb => cb.checked = false);
         document.querySelectorAll('#todoList .todo-item').forEach(el => el.classList.remove('done'));
         localStorage.setItem('todoState', JSON.stringify({}));
+        const todoCount = document.querySelectorAll('#todoList input[type="checkbox"]').length;
+        document.getElementById('todoCount').textContent = `0/${todoCount} done`;
         alert('✅ Tasks reset! Stay focused!');
     }
 
-    // Save todo state
+    // ============================================================
+    // 📰 REFRESH NEWS
+    // ============================================================
+    function refreshNews() {
+        // This is a static list for now
+        // You can replace with RSS feed or API call
+        const newsItems = [
+            { title: '🔹 Gemini 3.5 Flash released — 2x faster than previous', source: 'Google AI', time: '2 hours ago' },
+            { title: '🔹 Shopify launches AI-powered product descriptions', source: 'Shopify', time: '5 hours ago' },
+            { title: '🔹 GoHighLevel adds new AI automation workflows', source: 'HighLevel', time: '1 day ago' },
+            { title: '🔹 Upwork announces new AI matching for freelancers', source: 'Upwork', time: '2 days ago' },
+            { title: '🔹 ChatGPT gets new voice and vision capabilities', source: 'OpenAI', time: '3 days ago' },
+            { title: '🔹 Microsoft Copilot integrates with Shopify', source: 'Microsoft', time: '4 days ago' },
+            { title: '🔹 New AI tools for email marketing automation', source: 'Marketing AI', time: '5 days ago' }
+        ];
+        
+        // Randomize and pick 5
+        const shuffled = newsItems.sort(() => 0.5 - Math.random());
+        const selected = shuffled.slice(0, 5);
+        
+        const feed = document.getElementById('newsFeed');
+        feed.innerHTML = selected.map(n => `
+            <div class="news-item">
+                <div class="news-title">${n.title}</div>
+                <div class="news-source">${n.source} · <span class="news-time">${n.time}</span></div>
+            </div>
+        `).join('');
+    }
+
+    // ============================================================
+    // 🔄 SYNC FROM EXTENSION
+    // ============================================================
+    function syncFromExtension() {
+        document.getElementById('liveStatus').textContent = '⏳ Syncing from extension...';
+        
+        // If this is running as a Chrome extension page
+        if (typeof chrome !== 'undefined' && chrome.storage) {
+            chrome.storage.local.get(['dashboardLeads', 'followups'], function(result) {
+                if (result.dashboardLeads) {
+                    try { localStorage.setItem('dashboardLeads', JSON.stringify(result.dashboardLeads)); } catch(e) {}
+                }
+                if (result.followups) {
+                    try { localStorage.setItem('followups', JSON.stringify(result.followups)); } catch(e) {}
+                }
+                loadStats();
+                document.getElementById('liveStatus').textContent = '✅ Synced successfully!';
+                setTimeout(() => {
+                    document.getElementById('liveStatus').textContent = '🟢 Live · Auto-sync enabled';
+                }, 2000);
+            });
+        } else {
+            // If not in extension context, just reload from localStorage
+            loadStats();
+            document.getElementById('liveStatus').textContent = '🔄 Reloaded from local storage';
+            setTimeout(() => {
+                document.getElementById('liveStatus').textContent = '🟢 Live · Auto-sync enabled';
+            }, 2000);
+        }
+    }
+
+    // ============================================================
+    // 🏠 OPEN EXTENSION
+    // ============================================================
+    function openExtension() {
+        if (typeof chrome !== 'undefined' && chrome.runtime) {
+            chrome.runtime.sendMessage({ type: "OPEN_POPUP" });
+        } else {
+            alert('Please open the Dev Yeasin Extension from your Chrome toolbar.');
+        }
+    }
+
+    // ============================================================
+    // 🚀 INITIALIZATION
+    // ============================================================
     document.addEventListener('DOMContentLoaded', function() {
         // Load saved todo state
         const saved = JSON.parse(localStorage.getItem('todoState') || '{}');
@@ -441,6 +719,9 @@
                 } else {
                     this.closest('.todo-item').classList.remove('done');
                 }
+                const total = document.querySelectorAll('#todoList input[type="checkbox"]').length;
+                const done = document.querySelectorAll('#todoList input[type="checkbox"]:checked').length;
+                document.getElementById('todoCount').textContent = `${done}/${total} done`;
             });
         });
 
@@ -451,8 +732,24 @@
         rotateQuote();
         setInterval(rotateQuote, 8000);
 
-        // Sync stats every 30 seconds
-        setInterval(loadStats, 30000);
+        // Update country chips every 60 seconds
+        setInterval(updateCountryChips, 60000);
+
+        // Sync with extension every 30 seconds
+        setInterval(syncFromExtension, 30000);
+
+        // Event listeners
+        document.getElementById('syncNowBtn').addEventListener('click', syncFromExtension);
+        document.getElementById('resetTodoBtn').addEventListener('click', resetTodo);
+        document.getElementById('resetTodoBtn2').addEventListener('click', resetTodo);
+        document.getElementById('refreshNewsBtn').addEventListener('click', refreshNews);
+        document.getElementById('openExtensionLink').addEventListener('click', function(e) {
+            e.preventDefault();
+            openExtension();
+        });
+
+        // Initial news load
+        refreshNews();
     });
 </script>
 </body>
